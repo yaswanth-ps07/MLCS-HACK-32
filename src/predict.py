@@ -1,5 +1,6 @@
 import joblib
 import pandas as pd
+import shap
 
 MODEL_PATH = "models/random_forest.pkl"
 PREPROCESSOR_PATH = "models/preprocessor.pkl"
@@ -38,3 +39,30 @@ def get_risk_level(probability):
         return "Medium"
     else:
         return "Low"
+
+def explain_record(record):
+    model, preprocessor = load_model()
+
+    df = pd.DataFrame([record])
+
+    X = df.drop(columns=DROP_COLUMNS, errors="ignore")
+    X_processed = preprocessor.transform(X).toarray()
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_processed)
+
+    feature_names = preprocessor.get_feature_names_out()
+
+    values = shap_values[0, :, 1]
+
+    explanation = pd.DataFrame({
+        "Feature": feature_names,
+        "SHAP Value": values
+    })
+
+    explanation["Impact"] = explanation["SHAP Value"].abs()
+
+    return explanation.sort_values(
+        "Impact",
+        ascending=False
+    ).head(10)

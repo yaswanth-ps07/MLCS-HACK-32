@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-from src.predict import load_model, get_risk_level
+from src.predict import load_model, get_risk_level, explain_record
 
 
 st.set_page_config(
@@ -115,3 +115,13 @@ if uploaded_file is not None:
         st.bar_chart(
             importance_df.set_index("Feature")
         )
+
+        st.subheader("🧠 Explainable AI — SHAP")
+        
+        sample_record = df.iloc[0].to_dict()
+        shap_df = explain_record(sample_record)
+    
+        st.dataframe(
+                shap_df,
+                use_container_width=True
+            )
